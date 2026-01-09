@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kim Sevgi Hocadan Tebrik İster? | Pro Düello</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #d4af37; --blue-dark: #000520; --border: #3c4fbc; --bg: #000; }
+        body { background: var(--bg); color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        .watermark { position: fixed; bottom: 10px; right: 20px; font-size: 14px; color: rgba(212, 175, 55, 0.4); font-weight: bold; z-index: 50; }
+
+        #start-screen {
+            position: fixed; inset: 0; background: radial-gradient(circle, #001275 0%, #000 100%);
+            z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .brand-title { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 45px; text-align: center; margin-bottom: 30px; text-shadow: 0 0 20px var(--gold); }
+        input { padding: 15px; border-radius: 30px; border: 3px solid var(--gold); background: rgba(255,255,255,0.1); color: white; font-size: 18px; margin: 5px; width: 320px; text-align: center; outline: none; }
+        .start-btn { padding: 20px 60px; background: var(--gold); color: #000; font-weight: bold; border-radius: 40px; cursor: pointer; border: none; font-size: 22px; transition: 0.3s; margin-top: 20px; box-shadow: 0 0 15px var(--gold); }
+
+        #top-bar { height: 90px; display: flex; justify-content: space-between; align-items: center; padding: 0 50px; border-bottom: 3px solid var(--gold); }
+        .score-val { font-size: 32px; color: var(--gold); font-weight: bold; }
+        
+        #q-area { flex: 0.4; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px; }
+        .q-box { width: 92%; padding: 25px; background: var(--blue-dark); border: 4px solid var(--border); border-radius: 80px / 40px; text-align: center; font-size: 22px; font-weight: 700; box-shadow: 0 0 30px var(--border); }
+
+        .joker-row { display: flex; gap: 10px; margin-top: 15px; }
+        .j-btn { background: #000; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 15px; border-radius: 20px; font-size: 11px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .j-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        #arena { flex: 0.6; display: flex; width: 100%; height: 50vh; }
+        .zone { flex: 1; display: grid; grid-template-columns: 1fr; gap: 8px; padding: 15px; }
+        #zone-1 { border-right: 2px solid var(--gold); }
+        
+        .opt { background: linear-gradient(90deg, #000833 0%, #001a68 100%); border: 2px solid var(--border); border-radius: 50px; display: flex; align-items: center; padding: 0 25px; font-size: 16px; cursor: pointer; transition: 0.2s; height: 50px; }
+        .selected { background: #ff8800 !important; color: #000; }
+        .correct { background: #00aa00 !important; color: #fff; border-color: #fff; }
+        .wrong { background: #aa0000 !important; }
+        .fade { opacity: 0.05; pointer-events: none; }
+
+        #timer { font-size: 30px; color: var(--gold); font-weight: bold; border: 4px solid var(--gold); width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #000; }
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div class="watermark">Made by lakrlakr5dev</div>
+
+<audio id="snd-start" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+<audio id="snd-think" src="https://www.soundjay.com/buttons/beep-07.mp3" loop></audio>
+<audio id="snd-correct" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio> 
+<audio id="snd-wrong" src="https://assets.mixkit.co/active_storage/sfx/1149/1149-preview.mp3"></audio>
+<audio id="snd-final" src="https://assets.mixkit.co/active_storage/sfx/2569/2569-preview.mp3"></audio>
+
+<div id="start-screen">
+    <div class="brand-title">KİM SEVGİ HOCADAN<br>TEBRİK İSTER?</div>
+    <input type="text" id="p1" placeholder="Sol Yarışmacı">
+    <input type="text" id="p2" placeholder="Sağ Yarışmacı">
+    <button class="start-btn" onclick="begin()">DÜELLOYU BAŞLAT</button>
+</div>
+
+<div id="overlay">
+    <h1 style="color:var(--gold); font-size: 50px;">ARKADAŞA SORULUYOR...</h1>
+    <div id="o-timer" style="font-size: 100px; color: white;">20</div>
+</div>
+
+<div id="top-bar">
+    <div class="score-box"><div id="n1">P1</div><div id="s1" class="score-val">0</div></div>
+    <div id="timer">15</div>
+    <div class="score-box" style="text-align: right;"><div id="n2">P2</div><div id="s2" class="score-val">0</div></div>
+</div>
+
+<div id="q-area">
+    <div class="q-box" id="q-text">Soru Yükleniyor...</div>
+    <div class="joker-row">
+        <button class="j-btn" id="j50-1" onclick="joker50(1)">%50 SOL (100 P)</button>
+        <button class="j-btn" id="jf-1" onclick="jokerF(1)">ARKADAŞ SOL (80 P)</button>
+        <div style="width:40px"></div>
+        <button class="j-btn" id="j50-2" onclick="joker50(2)">%50 SAĞ (100 P)</button>
+        <button class="j-btn" id="jf-2" onclick="jokerF(2)">ARKADAŞ SAĞ (80 P)</button>
+    </div>
+</div>
+
+<div id="arena"><div class="zone" id="zone-1"></div><div class="zone" id="zone-2"></div></div>
+
+<script>
+// PDF KAYNAKLARINDAN SÜZÜLEN DEV SORU BANKASI
+const fullBank = [
+    {q: "Hangisi atasözlerinin deyimlerden farkıdır?", o: ["Öğüt vermesi", "Kalıplaşmış olması", "Mecazlı olması", "Söyleyeni belirsiz olması"], a: "Öğüt vermesi", p: 20},
+    {q: "Hangi ikili anlamca birbiriyle ÇELİŞİR?", o: ["İyilik eden iyilik bulur / İyilikten maraz doğar", "Damlaya damlaya göl olur / Ak akçe kara gün içindir", "Ağaç yaşken eğilir / Can boğazdan gelir", "İşleyen demir ışıldar / Akan su yosun tutmaz"], a: "İyilik eden iyilik bulur / İyilikten maraz doğar", p: 40},
+    {q: "'Yüzünden düşen bin parça' deyiminde hangi değişiklik anlatım bozukluğu yapar?", o: ["Yüzünden yerine 'Suratından' demek", "Cümle sonunda kullanmak", "Şahsa göre çekimlemek", "Anlamını açıklamak"], a: "Yüzünden yerine 'Suratından' demek", p: 30},
+    {q: "John Lyly'nin 'Ağzında bal olan arının, kuyruğunda iğnesi vardır.' özdeyişiyle hangisi yakındır?", o: ["Gülü seven dikenine katlanır", "Yalancının mumu yatsıya kadar yanar", "Sakla samanı gelir zamanı", "Öfkeyle kalkan zararla oturur"], a: "Gülü seven dikenine katlanır", p: 35},
+    {q: "Söyleyeni belli olan özlü sözlere ne ad verilir?", o: ["Özdeyiş (Vecize)", "Deyim", "Atasözü", "Mesel"], a: "Özdeyiş (Vecize)", p: 15},
+    {q: "Hangisi 'Gündüz kandilini hazırlamayan, gece karanlığa razı olur.' sözüyle benzerdir?", o: ["Yazın gölge kovan, kışın karın ovar.", "Damlaya damlaya göl olur.", "Hayır dile komşuna, hayır gele başına.", "İşleyen demir ışıldar."], a: "Yazın gölge kovan, kışın karın ovar.", p: 35},
+    {q: "Hangisi 'dayanışma' konusunu işleyen bir atasözüdür?", o: ["Ağaç yaprağıyla gürler.", "Aza kanaat etmeyen çoğu bulamaz.", "Yalancının mumu yatsıya kadar yanar.", "İşleyen demir ışıldar."], a: "Ağaç yaprağıyla gürler.", p: 20},
+    {q: "Montaigne'in 'Hedefi olmayan gemiye hiçbir rüzgar yardım etmez' sözü hangisidir?", o: ["Özdeyiş", "Atasözü", "Deyim", "Terim"], a: "Özdeyiş", p: 20},
+    {q: "'Bir baş soğan bir kazanı kokutur' atasözü hangisini vurgular?", o: ["Kötü birinin toplumu bozmasını", "Temizliğin önemini", "Paylaşmanın güzelliğini", "Hızlı çalışmayı"], a: "Kötü birinin toplumu bozmasını", p: 25},
+    {q: "Hangi deyim 'düşüncesiz, tutarsız konuşmak' anlamındadır?", o: ["Abuk sabuk konuşmak", "Ağız ağıza konuşmak", "Ağzı dolu dolu konuşmak", "Bilmece gibi konuşmak"], a: "Abuk sabuk konuşmak", p: 20},
+    {q: "Hangisi 'çok heyecanlanmak' anlamındadır?", o: ["İçi içine sığmamak", "İçi sızlamak", "İçine doğmak", "İçi kan ağlamak"], a: "İçi içine sığmamak", p: 15},
+    {q: "Hangisi sadece gerçek anlamlı bir atasözüdür?", o: ["Dost ile ye, iç; alışveriş etme.", "Üzüm üzüme baka baka kararır.", "Ateş olmayan yerden duman çıkmaz.", "Ağaç yaşken eğilir."], a: "Dost ile ye, iç; alışveriş etme.", p: 30},
+    {q: "Atasözleri ve deyimlerin ortak özelliği değildir?", o: ["Şahsa göre çekimlenebilme", "Kalıplaşmış olma", "Mecaz anlam taşıma", "Az sözle çok şey anlatma"], a: "Şahsa göre çekimlenebilme", p: 25},
+    {q: "'Bin bilsen de bir bilene danış' atasözü hangisiyle çelişir?", o: ["Yol bilen kervana katılmaz.", "Öfke baldan tatlıdır.", "Abdalın karnı doyunca gözü yolda olur.", "Aç aman bilmez."], a: "Yol bilen kervana katılmaz.", p: 30},
+    {q: "Deyimler genellikle kaç sözcükten oluşur?", o: ["En az iki", "En az üç", "Tek sözcük", "Cümle şeklinde"], a: "En az iki", p: 10},
+    {q: "Hangisi 'yakın şekilde konuşmak' anlamındadır?", o: ["Ağız ağıza konuşmak", "Abuk sabuk konuşmak", "Diline dolamak", "Kulak kesilmek"], a: "Ağız ağıza konuşmak", p: 20},
+    {q: "Aşağıdakilerden hangisi bir 'eylem' bildiren deyimdir?", o: ["İki yakası bir araya gelmemek", "İşleyen demir ışıldar", "Can boğazdan gelir", "Yalnız taş duvar olmaz"], a: "İki yakası bir araya gelmemek", p: 25}
+];
+
+let remainingQ = [];
+let sc1 = 0, sc2 = 0, active = false, tLeft = 15, mainTimer, cur;
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function begin() {
+    document.getElementById('n1').innerText = document.getElementById('p1').value.toUpperCase() || "SOL";
+    document.getElementById('n2').innerText = document.getElementById('p2').value.toUpperCase() || "SAĞ";
+    document.getElementById('start-screen').style.display = 'none';
+    remainingQ = [...fullBank];
+    shuffleArray(remainingQ); // Soruları en başta karıştır
+    play('snd-start');
+    setTimeout(loadQ, 2000);
+}
+
+function loadQ() {
+    if(remainingQ.length === 0) {
+        remainingQ = [...fullBank];
+        shuffleArray(remainingQ);
+    }
+    
+    active = true; tLeft = 15;
+    play('snd-think');
+    
+    cur = remainingQ.pop(); // Her seferinde karıştırılmış listeden son soruyu çek
+    
+    document.getElementById('q-text').innerText = cur.q;
+    let shuffledOpts = [...cur.o];
+    shuffleArray(shuffledOpts); // Şıkların yerini de her seferinde karıştır
+
+    ['zone-1', 'zone-2'].forEach((z, i) => {
+        const div = document.getElementById(z);
+        div.innerHTML = '';
+        shuffledOpts.forEach((o, idx) => {
+            const b = document.createElement('div');
+            b.className = 'opt';
+            b.innerHTML = `<span style="color:var(--gold); font-weight:bold; margin-right:15px">${['A','B','C','D'][idx]}:</span> ${o}`;
+            b.onclick = () => check(o, i+1, b);
+            div.appendChild(b);
+        });
+    });
+
+    clearInterval(mainTimer);
+    mainTimer = setInterval(() => {
+        tLeft--;
+        document.getElementById('timer').innerText = tLeft;
+        if(tLeft <= 0) { clearInterval(mainTimer); loadQ(); }
+    }, 1000);
+}
+
+function check(sel, p, el) {
+    if(!active) return;
+    active = false;
+    clearInterval(mainTimer);
+    document.getElementById('snd-think').pause();
+    play('snd-final');
+    el.classList.add('selected');
+
+    setTimeout(() => {
+        if(sel === cur.a) {
+            play('snd-correct');
+            el.classList.add('correct');
+            p === 1 ? sc1 += cur.p : sc2 += cur.p;
+        } else {
+            play('snd-wrong');
+            el.classList.add('wrong');
+            p === 1 ? sc2 += 10 : sc1 += 10;
+            reveal();
+        }
+        document.getElementById('s1').innerText = sc1;
+        document.getElementById('s2').innerText = sc2;
+        if(sc1 >= 250 || sc2 >= 250) win();
+        else setTimeout(loadQ, 2500);
+    }, 1500);
+}
+
+function reveal() {
+    document.querySelectorAll('.opt').forEach(o => {
+        if(o.innerText.includes(cur.a)) o.classList.add('correct');
+    });
+}
+
+function joker50(p) {
+    let s = p === 1 ? sc1 : sc2;
+    if(s < 100) return alert("Yetersiz Puan!");
+    p === 1 ? sc1 -= 100 : sc2 -= 100;
+    document.getElementById('s'+p).innerText = (p===1?sc1:sc2);
+    document.getElementById('j50-'+p).disabled = true;
+    const opts = Array.from(document.getElementById(`zone-${p}`).querySelectorAll('.opt'));
+    let f = 0;
+    opts.forEach(o => { if(!o.innerText.includes(cur.a) && f < 2) { o.classList.add('fade'); f++; } });
+}
+
+function jokerF(p) {
+    let s = p === 1 ? sc1 : sc2;
+    if(s < 80) return alert("Yetersiz Puan!");
+    p === 1 ? sc1 -= 80 : sc2 -= 80;
+    document.getElementById('s'+p).innerText = (p===1?sc1:sc2);
+    document.getElementById('jf-'+p).disabled = true;
+    const ov = document.getElementById('overlay');
+    ov.style.display = 'flex';
+    let ot = 20;
+    let oi = setInterval(() => {
+        ot--; document.getElementById('o-timer').innerText = ot;
+        if(ot <= 0) { clearInterval(oi); ov.style.display = 'none'; }
+    }, 1000);
+}
+
+function play(id) { 
+    const s = document.getElementById(id); 
+    if(s) { s.volume = 1.0; s.currentTime = 0; s.play(); }
+}
+
+function win() {
+    const w = sc1 >= 250 ? document.getElementById('n1').innerText : document.getElementById('n2').innerText;
+    document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--gold); color:#000; text-align:center;">
+        <h1 style="font-size:60px;">🏆 ŞAMPİYON: ${w}</h1>
+        <p style="font-size:24px;">Sevgi Hocadan En Büyük Tebriği Kaptın!</p>
+        <button class="start-btn" onclick="location.reload()" style="background:#000; color:#fff;">YENİ DÜELLO</button>
+    </div>`;
+}
+</script>
+</body>
+</html>
